@@ -1,6 +1,6 @@
 import {is} from "../core/is";
-import {DateUnit, Range} from "../utils/types";
-import {getUnit, toDate, toString} from "../utils/functions";
+import {DateUnit, Range} from "../../utils/types";
+import {getUnit, toDate, toString} from "../../utils/functions";
 
 export interface DatePredicate {
     (x: unknown): x is Date;

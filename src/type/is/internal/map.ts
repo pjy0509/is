@@ -1,5 +1,5 @@
 import {is} from "../core/is";
-import {Constructor, PrimitiveType, PrimitiveTypeKey} from "../utils/types";
+import {Constructor, PrimitiveType, PrimitiveTypeKey} from "../../utils/types";
 
 export interface MapPredicate {
     <T = unknown, U = unknown>(x: unknown): x is Map<T, U>;

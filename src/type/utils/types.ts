@@ -1,4 +1,5 @@
 export type Constructor<T> = { new(...args: any[]): T };
+export type ConstructorKey = "constructor";
 export type PrimitiveTypeKey = "string" | "number" | "boolean" | "bigint" | "symbol" | "undefined" | "object" | "function";
 export type PrimitiveType<Key extends PrimitiveTypeKey> = Key extends "string" ? string : Key extends "number" ? number : Key extends "boolean" ? boolean : Key extends "bigint" ? bigint : Key extends "symbol" ? symbol : Key extends "undefined" ? undefined : Key extends "object" ? object | null : Key extends "function" ? Function : never;
 export type PathRecord<Path extends PropertyKey, Value = unknown> = Path extends `${infer Key}.${infer Rest}` ? { [P in Key]: PathRecord<Rest, Value> } : { [P in Path]: Value };

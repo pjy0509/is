@@ -1,6 +1,6 @@
 import {is} from "../core/is";
-import {getTag, toString} from "../utils/functions";
-import {tags} from "../utils/constants";
+import {getTag, toString} from "../../utils/functions";
+import {tags} from "../../utils/constants";
 
 type AsyncFunction = (...args: any[]) => Promise<any>;
 

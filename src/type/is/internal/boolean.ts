@@ -1,5 +1,5 @@
 import {is} from "../core/is";
-import {toBoolean} from "../utils/functions";
+import {toBoolean} from "../../utils/functions";
 
 export interface BooleanPredicate {
     (x: unknown): x is boolean;

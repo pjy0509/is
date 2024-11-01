@@ -1,7 +1,7 @@
-import {tags} from './constants';
-import {is} from "../core/is";
+import {LOWER_SURROGATE_START, tags, UPPER_SURROGATE_START} from './constants';
 import {DateUnit} from "./types";
 import {RefStack} from "./RefStack";
+import {is} from "../is/core/is";
 
 export function getTag(x: any): string {
     if (x === null) return tags.null;
@@ -30,6 +30,14 @@ export function getByte(x: File, from: number, to: number): Promise<Array<string
     });
 }
 
+export function getCharType(x: number): number {
+    if (x >= 97 && x <= 122) return 0;
+    if (x >= 65 && x <= 90) return 1;
+    if (x >= 48 && x <= 57) return 2;
+
+    return -1;
+}
+
 export function getUnit(x: Date, unit?: DateUnit): number {
     if (unit === undefined) return x.getTime();
     if (unit === "year") return x.getFullYear();
@@ -54,10 +62,39 @@ export function toBoolean(x: unknown): boolean {
     return !!x;
 }
 
+export function toArray(x: unknown): Array<unknown> {
+    return is.array.like(x) ? Array.from(x) : [x];
+}
+
 export function toDate(x: unknown): Date {
     if (x instanceof Date) return x;
 
     return new Date(toString(x));
+}
+
+export function isValueJsonEncodable(x: unknown): boolean {
+    switch (typeof x) {
+        case "object":
+            return x === null || x instanceof Date || isArrayJsonEncodable(x) || isObjectJsonEncodable(x);
+        case "string":
+        case "number":
+        case "boolean":
+            return true;
+        default:
+            return false;
+    }
+}
+
+function isArrayJsonEncodable(x: unknown): boolean {
+    if (Array.isArray(x)) return x.every(e => isValueJsonEncodable(e));
+
+    return false;
+}
+
+function isObjectJsonEncodable(x: unknown): boolean {
+    if (is.object.plain(x)) return Reflect.ownKeys(x).every(e => is.string(e) && isValueJsonEncodable(x[e]));
+
+    return false;
 }
 
 export function equalDeep(lhs: any, rhs: any, comparator?: (lhs?: any, rhs?: any) => boolean | undefined, refStack: RefStack = new RefStack()): boolean {
@@ -195,6 +232,10 @@ export function equalDeep(lhs: any, rhs: any, comparator?: (lhs?: any, rhs?: any
     } finally {
         refStack.remove(lhs, rhs);
     }
+}
+
+export function surrogatePair(upper: number, lower: number): number {
+    return ((upper - UPPER_SURROGATE_START) << 10) + (lower - LOWER_SURROGATE_START) + 0x10000;
 }
 
 function getEnumerableProperties(x: any): Array<string | symbol> {

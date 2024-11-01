@@ -1,4 +1,4 @@
-import {Constructor, PathRecord, PrimitiveType, PrimitiveTypeKey} from "../utils/types";
+import {Constructor, ConstructorKey, PathRecord, PrimitiveType, PrimitiveTypeKey} from "../../utils/types";
 import {$string, StringPredicate} from "../internal/string";
 import {$number, NumberPredicate} from "../internal/number";
 import {$boolean, BooleanPredicate} from "../internal/boolean";
@@ -12,10 +12,13 @@ import {$map, MapPredicate} from "../internal/map";
 import {$node, NodePredicate} from "../internal/node";
 import {$file, FilePredicate} from "../internal/file";
 import {$date, DatePredicate} from "../internal/date";
-import {equalDeep} from "../utils/functions";
+import {equalDeep, isValueJsonEncodable} from "../../utils/functions";
+import {noopClass} from "../../utils/constants";
 
 export interface Predicate {
     <T extends PrimitiveTypeKey>(x: unknown, type: T): x is PrimitiveType<T>;
+
+    <T extends ConstructorKey>(x: unknown, type: T): x is Constructor<any>;
 
     <T>(x: unknown, type: Constructor<T>): x is T;
 
@@ -35,7 +38,11 @@ export interface Predicate {
 
     in<Key extends PropertyKey, T, U extends PrimitiveTypeKey>(x: T, propertyKeys: Key, type: U): x is T & PathRecord<Key, PrimitiveType<U>>;
 
+    in<Key extends PropertyKey, T, U extends ConstructorKey>(x: T, propertyKeys: Key, type: U): x is T & PathRecord<Key, Constructor<any>>;
+
     in<Key extends PropertyKey, T, U>(x: T, propertyKeys: Key, type?: Constructor<U>): x is T & PathRecord<Key, U>;
+
+    constructor(x: unknown): x is Constructor<any>;
 
     blob(x: unknown): x is Blob;
 
@@ -80,6 +87,7 @@ export interface Predicate {
 
 export const is: Predicate = Object.assign(
     function $is<T>(x: unknown, type: any): x is T {
+        if (type === "constructor") return is.constructor(x);
         if (typeof type === "string") return typeof x === type;
         if (typeof type === "undefined") return false;
 
@@ -117,6 +125,18 @@ export const is: Predicate = Object.assign(
             if (!!current[propertyKeys]) return false;
 
             return type === undefined || is(current[propertyKeys], type);
+        },
+
+        constructor: function $constructor(x: unknown): x is Constructor<any> {
+            if (typeof x !== 'function') return false;
+
+            try {
+                Reflect.construct(noopClass, [], x);
+            } catch (err) {
+                return false;
+            }
+
+            return true;
         },
 
         blob: function $blob(x: unknown): x is Blob {
@@ -207,28 +227,3 @@ export const is: Predicate = Object.assign(
         }
     }
 );
-
-function isValueJsonEncodable(x: unknown): boolean {
-    switch (typeof x) {
-        case "object":
-            return x === null || x instanceof Date || isArrayJsonEncodable(x) || isObjectJsonEncodable(x);
-        case "string":
-        case "number":
-        case "boolean":
-            return true;
-        default:
-            return false;
-    }
-}
-
-function isArrayJsonEncodable(x: unknown): boolean {
-    if (Array.isArray(x)) return x.every(e => isValueJsonEncodable(e));
-
-    return false;
-}
-
-function isObjectJsonEncodable(x: unknown): boolean {
-    if (is.object.plain(x)) return Reflect.ownKeys(x).every(e => is.string(e) && isValueJsonEncodable(x[e]));
-
-    return false;
-}

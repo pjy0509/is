@@ -1,7 +1,7 @@
 import {is} from "../core/is";
-import {Extensions} from "../utils/types";
-import {signatures} from "../utils/constants";
-import {Signature} from "../utils/Signature";
+import {Extensions} from "../../utils/types";
+import {signatures} from "../../utils/constants";
+import {Signature} from "../../utils/Signature";
 
 export interface FilePredicate {
     (x: unknown): x is File;

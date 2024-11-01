@@ -1,6 +1,6 @@
 import {is} from "../core/is";
-import {Range} from "../utils/types";
-import {toNumber} from "../utils/functions";
+import {Range} from "../../utils/types";
+import {toNumber} from "../../utils/functions";
 
 export interface NumberPredicate {
     (x: unknown): x is number;
