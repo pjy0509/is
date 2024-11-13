@@ -1,43 +1,40 @@
-import {is} from "../core/is";
-import {Constructor, PrimitiveType, PrimitiveTypeKey} from "../../utils/types";
+import {Constructor, ConstructorKey, PrimitiveType, PrimitiveTypeKey} from "../../utils/types";
+import to from "../../to/index";
+import is from "../index";
 
 export interface ArrayPredicate {
-    <T = unknown>(x: unknown): x is Array<T>;
+    <T>(x: unknown): x is T[];
 
-    is<T extends PrimitiveTypeKey>(x: Array<unknown>, type: T): x is Array<PrimitiveType<T>>;
+    is<T extends PrimitiveTypeKey>(x: unknown[], type: T): x is PrimitiveType<T>[];
 
-    is<T>(x: Array<unknown>, type: Constructor<T>): x is Array<T>;
+    is<T extends ConstructorKey>(x: unknown[], type: T): x is Constructor<any>[];
+
+    is<T>(x: unknown[], type: Constructor<T>): x is T[];
 
     typed(x: unknown): x is Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | BigUint64Array | Int8Array | Int16Array | Int32Array | BigInt64Array | Float32Array | Float64Array;
 
     buffer(x: unknown): x is ArrayBuffer;
 
-    like<T = unknown>(x: unknown): x is ArrayLike<T>;
+    like<T>(x: unknown): x is ArrayLike<T>;
 
-    empty<T = unknown>(x: ArrayLike<T>): boolean;
+    empty<T>(x: ArrayLike<T>): boolean;
 
-    unique<T = unknown>(x: ArrayLike<T>): boolean;
+    unique<T>(x: ArrayLike<T>): boolean;
 
-    allEmpty<T = unknown>(x: ArrayLike<T>): boolean;
+    emptySlot<T>(x: ArrayLike<T>): boolean;
 
-    anyEmpty<T = unknown>(x: ArrayLike<T>): boolean;
+    nil<T>(x: ArrayLike<T | null | undefined>): x is ArrayLike<T | null | undefined>;
 
-    notEmpty<T = unknown>(x: ArrayLike<T>): boolean;
-
-    allNil<T = unknown>(x: ArrayLike<T | null | undefined>): x is ArrayLike<null | undefined>;
-
-    anyNil<T = unknown>(x: ArrayLike<T | null | undefined>): x is ArrayLike<T | null | undefined>;
-
-    notNil<T = unknown>(x: ArrayLike<T | null | undefined>): x is ArrayLike<Exclude<T, null | undefined>>;
+    notNil<T>(x: ArrayLike<T | null | undefined>): x is ArrayLike<Exclude<T, null | undefined>>;
 }
 
 export const $array: ArrayPredicate = Object.assign(
-    function $array<T = unknown>(x: unknown): x is Array<T> {
+    function $array<T>(x: unknown): x is T[] {
         return Array.isArray(x);
     },
     {
-        is: function $is<T>(x: Array<unknown>, type: any): x is Array<T> {
-            return x.every(e => is(e, type));
+        is: function $is<T>(x: unknown[], type: any): x is T[] {
+            return x.every((e: unknown) => is(e, type));
         },
 
         typed: function $typed(x: unknown): x is Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | BigUint64Array | Int8Array | Int16Array | Int32Array | BigInt64Array | Float32Array | Float64Array {
@@ -48,42 +45,48 @@ export const $array: ArrayPredicate = Object.assign(
             return x instanceof ArrayBuffer;
         },
 
-        like: function $like<T = unknown>(x: unknown): x is ArrayLike<T> {
-            return x != null && is.in(x, "length") && is.propertyKey(x.length) && is.index(x.length) && !(typeof x === "function");
+        like: function $like<T>(x: unknown): x is ArrayLike<T> {
+            if (x == null) {
+                return false;
+            }
+
+            if (typeof x === "function") {
+                return false;
+            }
+
+            if (!to.object.has(x, "length")) {
+                return false;
+            }
+
+            let length = to.object.get(x, "length");
+
+            return is.propertyKey(length) && is.index(length);
         },
 
-        empty: function $empty<T = unknown>(x: ArrayLike<T>): boolean {
-            return !x.length;
+        empty: function $empty<T>(x: ArrayLike<T>): boolean {
+            return to.object.has(x, "length") && !to.object.get(x, "length");
         },
 
-        unique: function $unique<T = unknown>(x: ArrayLike<T>): boolean {
-            return is.array(x) ? x.length === new Set(x).size : is.array.unique(Array.from(x));
+        unique: function $unique<T>(x: ArrayLike<T>): boolean {
+            return is.array(x) ? to.object.get(x, "length") === new Set(to.object.values(x)).size : is.array.unique(Array.prototype.slice.call(to.object.values(x)));
         },
 
-        allEmpty: function $allEmpty<T = unknown>(x: ArrayLike<T>): boolean {
-            if (x.length <= 0) return false;
+        emptySlot: function $emptySlot<T>(x: ArrayLike<T>): boolean {
+            const length = to.object.get(x, "length");
 
-            return !Array.from({length: x.length}, (_, i) => i in x).includes(true);
+            if (typeof length === "number") {
+                return Array.from({length: length}, (_, i: number): boolean => to.object.has(x, i)).includes(false);
+            }
+
+            return false;
         },
 
-        anyEmpty: function $anyEmpty<T = unknown>(x: ArrayLike<T>): boolean {
-            return Array.from({length: x.length}, (_, i) => i in x).includes(false);
+        nil: function $nil<T>(x: ArrayLike<T | null | undefined>): x is ArrayLike<T | null | undefined> {
+            return is.array(x) ? to.object.values(x).some((e: T | null | undefined): boolean => e == null) : is.array.nil(Array.prototype.slice.call(to.object.values(x)));
         },
 
-        notEmpty: function $notEmpty<T = unknown>(x: ArrayLike<T>): boolean {
-            return !is.array.anyEmpty(x);
-        },
-
-        allNil: function $allNil<T = unknown>(x: ArrayLike<T | null | undefined>): x is ArrayLike<null | undefined> {
-            return is.array(x) ? x.every(e => e == null) : is.array.allNil(Array.from(x));
-        },
-
-        anyNil: function $anyNil<T = unknown>(x: ArrayLike<T | null | undefined>): x is ArrayLike<T | null | undefined> {
-            return is.array(x) ? x.some(e => e == null) : is.array.anyNil(Array.from(x));
-        },
-
-        notNil: function $notNil<T = unknown>(x: ArrayLike<T | null | undefined>): x is ArrayLike<Exclude<T, null | undefined>> {
-            return !is.array.anyNil(x);
+        notNil: function $notNil<T>(x: ArrayLike<T | null | undefined>): x is ArrayLike<Exclude<T, null | undefined>> {
+            return !is.array.nil(x);
         },
     }
 );

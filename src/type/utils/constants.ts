@@ -1,12 +1,25 @@
-import {Extensions} from "./types";
+import {Constructor, Extensions} from "./types";
 import {Signature} from "./Signature";
 
 export const Window = (() => {
-    if (typeof window !== 'undefined') return window;
-    if (typeof global !== 'undefined') return global;
-    if (typeof globalThis !== 'undefined') return globalThis;
+    if (typeof window !== 'undefined') {
+        return window;
+    }
+
+    if (typeof global !== 'undefined') {
+        return global;
+    }
+
+    if (typeof globalThis !== 'undefined') {
+        return globalThis;
+    }
+
     // eslint-disable-next-line no-restricted-globals
-    if (typeof self !== 'undefined') return self;
+    if (typeof self !== 'undefined') {
+        // eslint-disable-next-line no-restricted-globals
+        return self;
+    }
+
     // eslint-disable-next-line no-new-func
     return Function('return this')();
 })();
@@ -30,42 +43,43 @@ export const REGIONAL_INDICATOR_E5_SEQUENCE_END = 0xE007A;
 export const REGIONAL_INDICATOR_E5_END = 0xE007F;
 
 export const tags = {
-    null: "[object Null]",
-    undefined: "[object Undefined]",
-    string: "[object String]",
-    number: "[object Number]",
-    bigint: "[object BigInt]",
-    boolean: "[object Boolean]",
-    symbol: "[object Symbol]",
-    object: "[object Object]",
-    function: "[object Function]",
-    asyncFunction: "[object AsyncFunction]",
-    generatorFunction: "[object GeneratorFunction]",
-    asyncGeneratorFunction: "[object AsyncGeneratorFunction]",
-    arguments: "[object Arguments]",
-    array: "[object Array]",
-    arrayBuffer: "[object ArrayBuffer]",
-    dataView: "[object DataView]",
-    uint8Array: "[object Uint8Array]",
-    uint16Array: "[object Uint16Array]",
-    uint32Array: "[object Uint32Array]",
-    uint8ClampedArray: "[object Uint8ClampedArray]",
-    bigUint64Array: "[object BigUint64Array]",
-    int8Array: "[object Int8Array]",
-    int16Array: "[object Int16Array]",
-    int32Array: "[object Int32Array]",
-    bigInt64Array: "[object BigInt64Array]",
-    float32Array: "[object Float32Array]",
-    float64Array: "[object Float64Array]",
-    set: "[object Set]",
-    map: "[object Map]",
-    weakSet: "[object WeakSet]",
-    weakMap: "[object WeakMap]",
-    date: "[object Date]",
-    regExp: "[object RegExp]",
-    error: "[object Error]",
-    file: "[object File]",
-    blob: "[object Blob]",
+    null: "Null",
+    undefined: "Undefined",
+    string: "String",
+    number: "Number",
+    bigint: "BigInt",
+    boolean: "Boolean",
+    symbol: "Symbol",
+    object: "Object",
+    function: "Function",
+    asyncFunction: "AsyncFunction",
+    generatorFunction: "GeneratorFunction",
+    asyncGeneratorFunction: "AsyncGeneratorFunction",
+    arguments: "Arguments",
+    array: "Array",
+    arrayBuffer: "ArrayBuffer",
+    dataView: "DataView",
+    uint8Array: "Uint8Array",
+    uint16Array: "Uint16Array",
+    uint32Array: "Uint32Array",
+    uint8ClampedArray: "Uint8ClampedArray",
+    bigUint64Array: "BigUint64Array",
+    int8Array: "Int8Array",
+    int16Array: "Int16Array",
+    int32Array: "Int32Array",
+    bigInt64Array: "BigInt64Array",
+    float32Array: "Float32Array",
+    float64Array: "Float64Array",
+    set: "Set",
+    map: "Map",
+    weakSet: "WeakSet",
+    weakMap: "WeakMap",
+    date: "Date",
+    regExp: "RegExp",
+    error: "Error",
+    domException: "DOMException",
+    file: "File",
+    blob: "Blob",
 };
 
 export const signatures: { [Extension in Extensions]: Signature } = {
@@ -160,4 +174,8 @@ export const signatures: { [Extension in Extensions]: Signature } = {
     )
 };
 
-export const noopClass = class NoopClass {};
+export const observableSymbol: symbol = Symbol.for("Observable");
+
+export const memoizationSymbol: symbol = Symbol.for("Memoization");
+
+

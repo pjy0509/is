@@ -1,41 +1,42 @@
 import {is} from "../core/is";
 import {Language} from "../../utils/types";
-import {getCharType, toString} from "../../utils/functions";
 
 export interface StringPredicate {
     (x: unknown): x is string;
 
-    empty(x: unknown): boolean;
+    empty(x: string): boolean;
 
-    lowerCase(x: unknown): boolean;
+    lowerCase(x: string): boolean;
 
-    upperCase(x: unknown): boolean;
+    upperCase(x: string): boolean;
 
-    mixedCase(x: unknown): boolean;
+    mixedCase(x: string): boolean;
 
-    decimal(x: unknown): boolean;
+    decimal(x: string): boolean;
 
-    numeric(x: unknown): boolean;
+    numeric(x: string): boolean;
 
-    alphanumeric(x: unknown): boolean;
+    alphanumeric(x: string): boolean;
 
-    emoji(x: unknown): boolean;
+    emoji(x: string): boolean;
 
-    punctuation(x: unknown): boolean;
+    punctuation(x: string): boolean;
 
-    symbol(x: unknown): boolean;
+    symbol(x: string): boolean;
 
-    language(x: unknown, ...languages: Array<Language>): boolean;
+    marker(x: string): boolean;
 
-    match(x: unknown, regexp: RegExp): boolean;
+    language(x: string, ...languages: Language[]): boolean;
 
-    test(x: unknown, regexp: RegExp): boolean;
+    match(x: string, regexp: RegExp): boolean;
 
-    repeated(x: unknown, n: number): boolean;
+    test(x: string, regexp: RegExp): boolean;
 
-    sequential(x: unknown, n: number): boolean;
+    repeated(x: string, n: number): boolean;
 
-    index(x: unknown): boolean;
+    sequential(x: string, n: number): boolean;
+
+    index(x: string): boolean;
 }
 
 export const $string: StringPredicate = Object.assign(
@@ -43,75 +44,87 @@ export const $string: StringPredicate = Object.assign(
         return typeof x === "string";
     },
     {
-        empty: function $empty(x: unknown): boolean {
-            return is.string(x) ? !x.length : is.string.empty(toString(x));
+        empty: function $empty(x: string): boolean {
+            return !x.length;
         },
 
-        lowerCase: function $lowerCase(x: unknown): boolean {
-            return is.string(x) ? /^[^A-Z]*$/.test(x) : is.string.lowerCase(toString(x));
+        lowerCase: function $lowerCase(x: string): boolean {
+            return /^[^A-Z]*$/.test(x);
         },
 
-        upperCase: function $upperCase(x: unknown): boolean {
-            return is.string(x) ? /^[^a-z]*$/.test(x) : is.string.upperCase(toString(x));
+        upperCase: function $upperCase(x: string): boolean {
+            return /^[^a-z]*$/.test(x);
         },
 
-        mixedCase: function $mixedCase(x: unknown): boolean {
-            return is.string(x) ? /^(?=.*[a-z])(?=.*[A-Z]).+$/.test(x) : is.string.mixedCase(toString(x));
+        mixedCase: function $mixedCase(x: string): boolean {
+            return /^(?=.*[a-z])(?=.*[A-Z]).+$/.test(x);
         },
 
-        decimal: function $numeric(x: unknown): boolean {
-            return is.string(x) ? /^\s*?(-?\d*\.?\d*)(e-?\d*\.?\d*)?\s*?$/.test(x) : is.string.decimal(toString(x));
+        decimal: function $numeric(x: string): boolean {
+            return /^\s*?(-?\d*\.?\d*)(e-?\d*\.?\d*)?\s*?$/.test(x);
         },
 
-        numeric: function $numeric(x: unknown): boolean {
-            return is.string(x) ? /^[0-9]+$/.test(x) : is.string.numeric(toString(x));
+        numeric: function $numeric(x: string): boolean {
+            return /^[0-9]+$/.test(x);
         },
 
-        alphanumeric: function $alphanumeric(x: unknown): boolean {
-            return is.string(x) ? /^[a-zA-Z0-9]+$/.test(x) : is.string.alphanumeric(toString(x));
+        alphanumeric: function $alphanumeric(x: string): boolean {
+            return /^[a-zA-Z0-9]+$/.test(x);
         },
 
-        emoji: function $emoji(x: unknown): boolean {
-            return is.string(x) ? /^(?:\p{Extended_Pictographic}|\p{Emoji_Presentation}|\u200D)+$/u.test(x) : is.string.emoji(toString(x));
+        emoji: function $emoji(x: string): boolean {
+            // /^((subdivision-flag)|(keycap)|(else))$/u
+            return /^(?:\uD83C\uDFF4[\uDB40\uDC61\uDB40\uDC62\uDB40\uDC63\uDB40\uDC64\uDB40\uDC65\uDB40\uDC66\uDB40\uDC67\uDB40\uDC68\uDB40\uDC69\uDB40\uDC6A\uDB40\uDC6B\uDB40\uDC6C\uDB40\uDC6D\uDB40\uDC6E\uDB40\uDC6F\uDB40\uDC70\uDB40\uDC71\uDB40\uDC72\uDB40\uDC73\uDB40\uDC74\uDB40\uDC75\uDB40\uDC76\uDB40\uDC77\uDB40\uDC78\uDB40\uDC79\uDB40\uDC7A]*\uDB40\uDC7F|[\u0030-\u0039\u0023\u002A][\uFE00-\uFE0F]?\u20E3|(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}][\uFE00-\uFE0F]?(?:\u200D[\p{Extended_Pictographic}\p{Emoji_Presentation}][\uFE00-\uFE0F]?)?)+)$/u.test(x);
         },
 
-        punctuation: function $punctuation(x: unknown): boolean {
-            return is.string(x) ? /^\p{P}+$/u.test(x) : is.string.punctuation(toString(x));
+        punctuation: function $punctuation(x: string): boolean {
+            return /^\p{P}+$/u.test(x);
         },
 
-        symbol: function $symbol(x: unknown): boolean {
-            return is.string(x) ? /^\p{S}+$/u.test(x) : is.string.symbol(toString(x));
+        symbol: function $symbol(x: string): boolean {
+            return /^\p{S}+$/u.test(x);
         },
 
-        language: function $language(x: unknown, ...languages: Array<Language>): boolean {
-            return is.string(x) ? new RegExp("^[\\d\\W\\p{M}" + languages.map(language => "\\p{Script=" + language.replace(/^(.)|(.*)/g, (match, p1, p2) => p1 ? p1.toUpperCase() : p2.toLowerCase()) + "}").join("") + "]+$", "u").test(x.normalize("NFC")) : is.string.language(toString(x), ...languages);
+        marker: function $marker(x: string): boolean {
+            return /^\p{M}+$/u.test(x);
         },
 
-        match: function $match(x: unknown, regexp: RegExp): boolean {
-            return is.string(x) ? x.match(regexp) !== null : is.string.match(toString(x), regexp);
+        language: function $language(x: string, ...languages: Language[]): boolean {
+            return new RegExp("^[\\d\\W\\p{M}" + languages.map(language => "\\p{Script=" + language.replace(/^(.)|(.*)/g, (_, p1, p2): string => p1 ? p1.toUpperCase() : p2.toLowerCase()) + "}").join("") + "]+$", "u").test(x.normalize("NFC"));
         },
 
-        test: function $test(x: unknown, regexp: RegExp): boolean {
-            return is.string(x) ? regexp.test(x) : is.string.test(toString(x), regexp);
+        match: function $match(x: string, regexp: RegExp): boolean {
+            return x.match(regexp) !== null;
         },
 
-        repeated: function $repeated(x: unknown, n: number): boolean {
-            return n <= 1 ? true : is.string(x) ? new RegExp("(.)\\1{" + (n - 1) + ",}").test(x) : is.string.repeated(toString(x), n);
+        test: function $test(x: string, regexp: RegExp): boolean {
+            return regexp.test(x);
         },
 
-        sequential: function $sequential(x: unknown, n: number): boolean {
-            if (!is.string(x)) return is.string.sequential(toString(x), n);
+        repeated: function $repeated(x: string, n: number): boolean {
+            return n <= 1 ? true : new RegExp("(.)\\1{" + (n - 1) + ",}").test(x);
+        },
 
-            if (n <= 1 || x.length < n) return false;
+        sequential: function $sequential(x: string, n: number): boolean {
+            if (n <= 1 || x.length < n) {
+                return false;
+            }
 
-            const a: Array<string> = Array.from(x);
+            // helper
+            const getCharType: (...args: any[]) => any = (x: number): number => x >= 97 && x <= 122 ? 0 : x >= 65 && x <= 90 ? 1 : x >= 48 && x <= 57 ? 2 : -1;
 
-            return a.some((_, i) => {
-                if (i > a.length - n) return false;
+            const a: string[] = Array.prototype.slice.call(x);
+
+            return a.some((_, i: number) => {
+                if (i > a.length - n) {
+                    return false;
+                }
 
                 const p: number = getCharType(a[i].charCodeAt(0));
 
-                if (p === -1) return false;
+                if (p === -1) {
+                    return false;
+                }
 
                 return [1, -1].some(d => {
                     return a.slice(i, i + n).every((s, j) => {
@@ -123,8 +136,8 @@ export const $string: StringPredicate = Object.assign(
             });
         },
 
-        index: function $index(x: unknown): boolean {
-            return is.string(x) ? is.string.test(x, /^(?:0|[1-9]\d*)$/) : is.string.index(toString(x));
+        index: function $index(x: string): boolean {
+            return is.string.test(x, /^(?:0|[1-9]\d*)$/);
         },
     }
 );

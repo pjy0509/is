@@ -1,36 +1,48 @@
 import {is} from "../core/is";
-import {Constructor, PrimitiveType, PrimitiveTypeKey} from "../../utils/types";
+import {Constructor, ConstructorKey, PrimitiveType, PrimitiveTypeKey} from "../../utils/types";
 
 export interface MapPredicate {
-    <T = unknown, U = unknown>(x: unknown): x is Map<T, U>;
+    <T, U>(x: unknown): x is Map<T, U>;
 
     is<T extends PrimitiveTypeKey, U extends PrimitiveTypeKey>(x: Map<unknown, unknown>, keyType: T, valueType: U): x is Map<PrimitiveType<T>, PrimitiveType<U>>;
 
+    is<T extends PrimitiveTypeKey, U extends ConstructorKey>(x: Map<unknown, unknown>, keyType: T, valueType: U): x is Map<PrimitiveType<T>, Constructor<any>>;
+
     is<T extends PrimitiveTypeKey, U>(x: Map<unknown, unknown>, keyType: T, valueType: Constructor<U>): x is Map<PrimitiveType<T>, U>;
 
+    is<T extends ConstructorKey, U extends PrimitiveTypeKey>(x: Map<unknown, unknown>, keyType: T, valueType: U): x is Map<Constructor<any>, PrimitiveType<U>>;
+
+    is<T extends ConstructorKey, U extends ConstructorKey>(x: Map<unknown, unknown>, keyType: T, valueType: U): x is Map<Constructor<any>, Constructor<any>>;
+
+    is<T extends ConstructorKey, U>(x: Map<unknown, unknown>, keyType: T, valueType: Constructor<U>): x is Map<Constructor<any>, U>;
+
     is<T, U extends PrimitiveTypeKey>(x: Map<unknown, unknown>, keyType: Constructor<T>, valueType: U): x is Map<T, PrimitiveType<U>>;
+
+    is<T, U extends ConstructorKey>(x: Map<unknown, unknown>, keyType: Constructor<T>, valueType: U): x is Map<T, Constructor<any>>;
 
     is<T, U>(x: Map<unknown, unknown>, keyType: Constructor<T>, valueType: Constructor<U>): x is Map<T, U>;
 
     keyIs<T extends PrimitiveTypeKey, U>(x: Map<unknown, U>, keyType: T): x is Map<PrimitiveType<T>, U>;
 
+    keyIs<T extends ConstructorKey, U>(x: Map<unknown, U>, keyType: T): x is Map<Constructor<any>, U>;
+
     keyIs<T, U>(x: Map<unknown, U>, keyType: Constructor<T>): x is Map<T, U>;
 
-    valueIs<T extends PrimitiveTypeKey, U>(x: Map<U, unknown>, valueType: T): x is Map<U, PrimitiveType<T>>;
+    valueIs<T, U extends PrimitiveTypeKey>(x: Map<T, unknown>, valueType: U): x is Map<T, PrimitiveType<U>>;
 
-    valueIs<T, U>(x: Map<U, unknown>, valueType: Constructor<T>): x is Map<U, T>;
+    valueIs<T, U extends ConstructorKey>(x: Map<T, unknown>, valueType: U): x is Map<T, Constructor<any>>;
 
-    empty<T = unknown, U = unknown>(x: Map<T, U>): boolean;
+    valueIs<T, U>(x: Map<T, unknown>, valueType: Constructor<U>): x is Map<T, U>;
 
-    allNil<T = unknown, U = unknown>(x: Map<U, T | null | undefined>): x is Map<U, null | undefined>;
+    empty<T, U>(x: Map<T, U>): boolean;
 
-    anyNil<T = unknown, U = unknown>(x: Map<U, T | null | undefined>): x is Map<U, T | null | undefined>;
+    nil<T, U>(x: Map<U, T | null | undefined>): x is Map<U, T | null | undefined>;
 
-    notNil<T = unknown, U = unknown>(x: Map<U, T | null | undefined>): x is Map<U, Exclude<T, null | undefined>>;
+    notNil<T, U>(x: Map<U, T | null | undefined>): x is Map<U, Exclude<T, null | undefined>>;
 }
 
 export const $map: MapPredicate = Object.assign(
-    function $map<T = unknown, U = unknown>(x: unknown): x is Map<T, U> {
+    function $map<T, U>(x: unknown): x is Map<T, U> {
         return x instanceof Map;
     },
     {
@@ -39,27 +51,23 @@ export const $map: MapPredicate = Object.assign(
         },
 
         keyIs: function $keyIs<T, U>(x: Map<unknown, U>, keyType: Constructor<T>): x is Map<T, U> {
-            return is.array.is(Array.from(x.keys()), keyType);
+            return is.array.is(Array.prototype.slice.call(x.keys()), keyType);
         },
 
         valueIs: function $valueIs<T, U>(x: Map<U, unknown>, valueType: Constructor<T>): x is Map<U, T> {
-            return is.array.is(Array.from(x.values()), valueType);
+            return is.array.is(Array.prototype.slice.call(x.values()), valueType);
         },
 
-        empty: function $empty<T = unknown, U = unknown>(x: Map<T, U>): boolean {
+        empty: function $empty<T, U>(x: Map<T, U>): boolean {
             return !x.size;
         },
 
-        allNil: function $allNil<T = unknown, U = unknown>(x: Map<U, T | null | undefined>): x is Map<U, null | undefined> {
-            return is.array.allNil(Array.from(x.values()));
+        nil: function $nil<T, U>(x: Map<U, T | null | undefined>): x is Map<U, T | null | undefined> {
+            return is.array.nil(Array.prototype.slice.call(x.values()));
         },
 
-        anyNil: function $anyNil<T = unknown, U = unknown>(x: Map<U, T | null | undefined>): x is Map<U, T | null | undefined> {
-            return is.array.anyNil(Array.from(x.values()));
+        notNil: function $notNil<T, U>(x: Map<U, T | null | undefined>): x is Map<U, Exclude<T, null | undefined>> {
+            return !is.map.nil(x);
         },
-
-        notNil: function $notNil<T = unknown, U = unknown>(x: Map<U, T | null | undefined>): x is Map<U, Exclude<T, null | undefined>> {
-            return !is.map.anyNil(x);
-        }
     }
 );

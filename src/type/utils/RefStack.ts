@@ -14,10 +14,6 @@ export class RefStack {
         return this.stack.get(lhs) != null && this.stack.get(rhs) != null;
     }
 
-    equal(lhs: any, rhs: any): boolean {
-        return this.stack.get(lhs) === rhs;
-    }
-
     remove(lhs: any, rhs: any): void {
         this.stack.delete(lhs);
         this.stack.delete(rhs);

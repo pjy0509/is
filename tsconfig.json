@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "es6",
-    "lib": ["es2019", "dom"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["ESNext", "dom"],
     "declaration": true,
     "outDir": "dist",
     "strict": true,

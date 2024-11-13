@@ -10,7 +10,7 @@ export interface FilePredicate {
 
     video(x: File): Promise<boolean>;
 
-    extensions(x: File, ...extensions: Array<Extensions>): Promise<boolean>;
+    extensions(x: File, ...extensions: Extensions[]): Promise<boolean>;
 
     pdf(x: File): Promise<boolean>;
 
@@ -90,7 +90,7 @@ export const $file: FilePredicate = Object.assign(
             });
         },
 
-        extensions: function $extensions(x: File, ...extensions: Array<Extensions>): Promise<boolean> {
+        extensions: function $extensions(x: File, ...extensions: Extensions[]): Promise<boolean> {
             return Signature.merge(extensions.map(extension => signatures[extension])).check(x);
         },
 

@@ -1,12 +1,11 @@
 import {is} from "../core/is";
-import {toBoolean} from "../../utils/functions";
 
 export interface BooleanPredicate {
     (x: unknown): x is boolean;
 
-    true(x: unknown): boolean;
+    true(x: boolean): boolean;
 
-    false(x: unknown): boolean;
+    false(x: boolean): boolean;
 }
 
 export const $boolean: BooleanPredicate = Object.assign(
@@ -14,12 +13,12 @@ export const $boolean: BooleanPredicate = Object.assign(
         return is(x, "boolean");
     },
     {
-        true: function $true(x: unknown): boolean {
-            return is.boolean(x) ? x : is.boolean.true(toBoolean(x));
+        true: function $true(x: boolean): boolean {
+            return x;
         },
 
-        false: function $false(x: unknown): boolean {
-            return is.boolean(x) ? !x : is.boolean.false(toBoolean(x));
+        false: function $false(x: boolean): boolean {
+            return !x;
         }
     }
 );

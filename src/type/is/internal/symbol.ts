@@ -12,7 +12,9 @@ export const $symbol: SymbolPredicate = Object.assign(
         global: function $global(x: symbol): boolean {
             const description: string | undefined = x.description;
 
-            if (description === undefined) return false;
+            if (description === undefined) {
+                return false;
+            }
 
             return Symbol.for(description) === x;
         }

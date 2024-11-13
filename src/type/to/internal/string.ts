@@ -1,4 +1,3 @@
-import {surrogatePair, toString} from "../../utils/functions";
 import {is} from "../../is/core/is";
 import {to} from "../core/to";
 import {
@@ -17,100 +16,122 @@ import {
 export interface StringConverter {
     (x: unknown): string;
 
-    bytes(x: unknown): Array<string>;
+    bytes(x: string): string[];
 
-    segments(x: unknown): Array<string>;
+    segments(x: string): string[];
 
-    words(x: unknown): Array<string>;
+    words(x: string): string[];
 
-    lines(x: unknown): Array<string>;
+    lines(x: string): string[];
+
+    lowercase<T extends string>(x: T): Lowercase<T>;
+
+    uppercase<T extends string>(x: T): Uppercase<T>;
+
+    capitalize<T extends string>(x: T): Capitalize<T>;
+
+    uncapitalize<T extends string>(x: T): Uncapitalize<T>;
+
+    camelcase(x: string): string;
+
+    pascalcase(x: string): string;
+
+    kebabcase(x: string): string;
+
+    snakecase(x: string): string;
+
+    titlecase(x: string): string;
+
+    pad(x: string, length: number, fill?: string): string;
+
+    padStart(x: string, length: number, fill?: string): string;
+
+    padEnd(x: string, length: number, fill?: string): string;
+
+    trim(x: string, ...chars: string[]): string;
+
+    trimStart(x: string, char1: string): string;
+
+    trimStart(x: string, char1: string, char2: string): string;
+
+    trimStart(x: string, char1: string, char2: string, char3: string): string;
+
+    trimStart(x: string, ...chars: string[]): string;
+
+    trimEnd(x: string, char1: string): string;
+
+    trimEnd(x: string, char1: string, char2: string): string;
+
+    trimEnd(x: string, char1: string, char2: string, char3: string): string;
+
+    trimEnd(x: string, ...chars: string[]): string;
 }
 
 export const $string: StringConverter = Object.assign(
     function $string(x: unknown): string {
-        return toString(x);
+        return typeof x === "string" ? x : is.array.like(x) ? to.object.values(x) + "" : x + "";
     },
     {
-        bytes: function $bytes(x: unknown): Array<string> {
-            if (!is.string(x)) return to.string.bytes(to.string(x));
+        bytes: function $bytes(x: string): string[] {
+            const bytes: string[] = [];
 
-            const bytes: Array<string> = [];
-
-            for (let i = 0; i < x.length; i++) {
+            for (let i: number = 0; i < x.length; i++) {
                 bytes.push(x[i].charCodeAt(0).toString(16));
             }
 
             return bytes;
         },
 
-        segments: function $segments(x: unknown): Array<string> {
-            if (!is.string(x)) return to.string.segments(x);
-
+        segments: function $segments(x: string): string[] {
             const $Intl: object = Intl;
 
-            if (is.in($Intl, "Segmenter", "constructor")) return [...new $Intl.Segmenter(undefined, {granularity: "grapheme"}).segment(x)].map(segment => segment.segment);
+            if (is.in($Intl, "Segmenter", "constructor")) {
+                return [...new $Intl.Segmenter(undefined, {granularity: "grapheme"}).segment(x)].map(segment => segment.segment);
+            }
 
-            const arr: Array<string> = [];
+            const arr: string[] = [];
             let i: number = 0;
             let segmentBuffer: string = "";
             let joinerBuffer: string = "";
 
             // helper
-            const isJoinable: Function = (x: string) => {
-                return /^(?=.*[\p{Extended_Pictographic}\p{Emoji_Presentation}])(?!.*\w).*$/u.test(x);
+            const surrogatePair: (...args: any[]) => any = (upper: number, lower: number): number => ((upper - UPPER_SURROGATE_START) << 10) + (lower - LOWER_SURROGATE_START) + 0x10000;
+
+            const isJoinable: (...args: any[]) => any = (x: string) => /^(?=.*[\p{Extended_Pictographic}\p{Emoji_Presentation}])(?!.*\w).*$/u.test(x);
+
+            const is2ByteVariationSelector: (...args: any[]) => any = (code0: number): boolean => is.number.bt(code0, VARIATION_SELECTOR_0_TO_16_START, VARIATION_SELECTOR_0_TO_16_END);
+
+            const is4ByteVariationSelector: (...args: any[]) => any = (pair0: number): boolean => is.number.bt(pair0, VARIATION_SELECTOR_17_TO_256_START, VARIATION_SELECTOR_17_TO_256_END);
+
+            const isZeroWidthJoiner: (...args: any[]) => any = (code0: number): boolean => code0 === ZERO_WIDTH_JOINER;
+
+            const isMarker: (...args: any[]) => any = (code0: number): boolean => /\p{M}/u.test(String.fromCharCode(code0));
+
+            const isSurrogatePair: (...args: any[]) => any = (code0: number, code1: number): boolean => is.number.bt(code0, UPPER_SURROGATE_START, UPPER_SURROGATE_END) && is.number.bt(code1, LOWER_SURROGATE_START, LOWER_SURROGATE_END);
+
+            const isSkinToneModifier: (...args: any[]) => any = (pair0: number): boolean => is.number.bt(pair0, SKIN_TONE_MODIFIER_START, SKIN_TONE_MODIFIER_END);
+
+            const isRegionalIndicatorE2Sequence: (...args: any[]) => any = (pair0: number): boolean => is.number.bt(pair0, REGIONAL_INDICATOR_E2_START, REGIONAL_INDICATOR_E2_END);
+
+            const isRegionalIndicatorE5Start: (...args: any[]) => any = (pair0: number): boolean => pair0 === REGIONAL_INDICATOR_E5_START;
+
+            const isRegionalIndicatorE5End: (...args: any[]) => any = (pair0: number): boolean =>  pair0 === REGIONAL_INDICATOR_E5_END;
+
+            const isRegionalIndicatorE5Sequence: (...args: any[]) => any = (pair0: number): boolean => is.number.bt(pair0, REGIONAL_INDICATOR_E5_SEQUENCE_START, REGIONAL_INDICATOR_E5_SEQUENCE_END);
+
+            const take: (...args: any[]) => any = (n: number) => {
+                for (let j: number = 0; j < n; j++) {
+                    segmentBuffer += x[i++];
+                }
             }
 
-            const is8ByteVariationSelector: Function = (code0: number): boolean => {
-                return is.number.bt(code0, VARIATION_SELECTOR_0_TO_16_START, VARIATION_SELECTOR_0_TO_16_END);
-            }
-
-            const is16ByteVariationSelector: Function = (pair0: number): boolean => {
-                return is.number.bt(pair0, VARIATION_SELECTOR_17_TO_256_START, VARIATION_SELECTOR_17_TO_256_END);
-            }
-
-            const isZeroWidthJoiner: Function = (code0: number): boolean => {
-                return code0 === ZERO_WIDTH_JOINER;
-            }
-
-            const isMarker: Function = (code0: number): boolean => {
-                return /\p{M}/u.test(String.fromCharCode(code0));
-            }
-
-            const isSurrogatePair: Function = (code0: number, code1: number): boolean => {
-                return is.number.bt(code0, UPPER_SURROGATE_START, UPPER_SURROGATE_END) && is.number.bt(code1, LOWER_SURROGATE_START, LOWER_SURROGATE_END);
-            }
-
-            const isSkinToneModifier: Function = (pair0: number): boolean => {
-                return is.number.bt(pair0, SKIN_TONE_MODIFIER_START, SKIN_TONE_MODIFIER_END);
-            }
-
-            const isRegionalIndicatorE2Sequence: Function = (pair0: number): boolean => {
-                return is.number.bt(pair0, REGIONAL_INDICATOR_E2_START, REGIONAL_INDICATOR_E2_END);
-            }
-
-            const isRegionalIndicatorE5Start: Function = (pair0: number): boolean => {
-                return pair0 === REGIONAL_INDICATOR_E5_START;
-            }
-
-            const isRegionalIndicatorE5End: Function = (pair0: number): boolean => {
-                return pair0 === REGIONAL_INDICATOR_E5_END;
-            }
-
-            const isRegionalIndicatorE5Sequence: Function = (pair0: number): boolean => {
-                return is.number.bt(pair0, REGIONAL_INDICATOR_E5_SEQUENCE_START, REGIONAL_INDICATOR_E5_SEQUENCE_END);
-            }
-
-            const take: Function = (n: number) => {
-                for (let j = 0; j < n; j++) segmentBuffer += x[i++];
-            }
-
-            const flush: Function = (n: number) => {
+            const flush: (...args: any[]) => any = (n: number) => {
                 take(n);
 
                 if (i < x.length) {
                     const code0: number = x[i].charCodeAt(0);
 
-                    if (is8ByteVariationSelector(code0) || isZeroWidthJoiner(code0) || isMarker(code0)) {
+                    if (is2ByteVariationSelector(code0) || isZeroWidthJoiner(code0) || isMarker(code0)) {
                         // process variation selector (8byte) / zero width joiner / markers
                         flush(1);
                     }
@@ -121,7 +142,7 @@ export const $string: StringConverter = Object.assign(
                         if (isSurrogatePair(code0, code1)) {
                             let pair0: number = surrogatePair(code0, code1);
 
-                            if (is16ByteVariationSelector(pair0) || isSkinToneModifier(pair0)) {
+                            if (is4ByteVariationSelector(pair0) || isSkinToneModifier(pair0)) {
                                 // process variation selector (16byte) / skin tone modifier
                                 flush(2);
                             }
@@ -134,8 +155,11 @@ export const $string: StringConverter = Object.assign(
                         joinerBuffer += segmentBuffer;
                     } else {
                         if (joinerBuffer) {
-                            if (isJoinable(segmentBuffer)) segmentBuffer = joinerBuffer + segmentBuffer;
-                            else arr.push(joinerBuffer);
+                            if (isJoinable(segmentBuffer)) {
+                                segmentBuffer = joinerBuffer + segmentBuffer;
+                            } else {
+                                arr.push(joinerBuffer);
+                            }
 
                             joinerBuffer = "";
                         }
@@ -148,9 +172,9 @@ export const $string: StringConverter = Object.assign(
             }
 
             while (i < x.length) {
-                const code0 = x[i].charCodeAt(0);
+                const code0: number = x[i].charCodeAt(0);
 
-                if (is8ByteVariationSelector(code0) || isZeroWidthJoiner(code0) || isMarker(code0)) {
+                if (is2ByteVariationSelector(code0) || isZeroWidthJoiner(code0) || isMarker(code0)) {
                     // process variation selector (8byte) / zero width joiner / markers
                     flush(1);
                 } else if (i + 1 < x.length) {
@@ -159,7 +183,7 @@ export const $string: StringConverter = Object.assign(
                     if (isSurrogatePair(code0, code1)) {
                         let pair0 = surrogatePair(code0, code1);
 
-                        if (is16ByteVariationSelector(pair0)) {
+                        if (is4ByteVariationSelector(pair0)) {
                             // process variation selector (16byte)
                             flush(2);
                         } else if (isRegionalIndicatorE2Sequence(pair0)) {
@@ -198,6 +222,8 @@ export const $string: StringConverter = Object.assign(
                                         } else {
                                             break;
                                         }
+                                    } else {
+                                        break;
                                     }
                                 } else {
                                     break;
@@ -210,7 +236,6 @@ export const $string: StringConverter = Object.assign(
                         }
                     } else {
                         flush(1);
-                        flush(1);
                     }
                 } else {
                     flush(1);
@@ -220,16 +245,174 @@ export const $string: StringConverter = Object.assign(
             return arr;
         },
 
-        words: function $words(x: unknown): Array<string> {
-            if (!is.string(x)) return to.string.words(to.string(x));
+        words: function $words(x: string): string[] {
+            const segments: string[] = to.string.segments(x);
+            const words: string[] = [];
+            let i: number = 0;
+            let buffer: string = "";
 
-            return Array.from(x.match(/\p{Lu}?\p{Ll}+|[0-9]+|\p{Lu}+(?!\p{Ll})|\p{Emoji_Presentation}|\p{Extended_Pictographic}|\p{L}+/gu) ?? []);
+            // helper
+            const isNumber: (...args: any[]) => any = (char: string): boolean => /\p{N}/u.test(char);
+
+            const isLetterUppercase: (...args: any[]) => any = (char: string): boolean => /\p{Lu}/u.test(char);
+
+            const isLetterLowercase: (...args: any[]) => any = (char: string): boolean => /\p{Ll}/u.test(char);
+
+            const isSpace: (...args: any[]) => any = (char: string): boolean => /[\p{Z}\-_]/u.test(char);
+
+            while (i < segments.length) {
+                if (isLetterUppercase(segments[i])) {
+                    buffer += segments[i++];
+
+                    if (i < segments.length && isLetterLowercase(segments[i])) {
+                        // Xxx...
+                        while (i < segments.length && isLetterLowercase(segments[i])) buffer += segments[i++];
+                    } else {
+                        // XXX...
+                        while (i < segments.length && isLetterUppercase(segments[i])) buffer += segments[i++];
+                    }
+                } else if (isLetterLowercase(segments[i])) {
+                    // xxx...
+                    while (i < segments.length && isLetterLowercase(segments[i])) buffer += segments[i++];
+                } else if (isNumber(segments[i])) {
+                    // 000...
+                    while (i < segments.length && isNumber(segments[i])) buffer += segments[i++];
+                } else if (isSpace(segments[i])) {
+                    i++;
+                    continue;
+                } else {
+                    buffer += segments[i++];
+                }
+
+                words.push(buffer);
+                buffer = "";
+            }
+
+            return words;
         },
 
-        lines: function $lines(x: unknown): Array<string> {
-            if (!is.string(x)) return to.string.lines(to.string(x));
-
+        lines: function $lines(x: string): string[] {
             return x.split("\n");
+        },
+
+        lowercase: function $lowercase<T extends string>(x: string): Lowercase<T> {
+            return x.toLowerCase() as Lowercase<T>;
+        },
+
+        uppercase: function $uppercase<T extends string>(x: string): Uppercase<T> {
+            return x.toUpperCase() as Uppercase<T>;
+        },
+
+        capitalize: function $capitalize<T extends string>(x: string): Capitalize<T> {
+            return to.string.uppercase(x.charAt(0)) + to.string.lowercase(x.slice(1)) as Capitalize<T>;
+        },
+
+        uncapitalize: function $uncapitalize<T extends string>(x: string): Uncapitalize<T> {
+            return to.string.lowercase(x.charAt(0)) + to.string.uppercase(x.slice(1)) as Uncapitalize<T>;
+        },
+
+        camelcase: function $camelcase(x: string): string {
+            const words: string[] = to.string.words(x);
+
+            if (is.array.empty(words)) {
+                return "";
+            }
+
+            const [first, ...rest] = words;
+
+            return first + rest.map(to.string.capitalize).join("");
+        },
+
+        pascalcase: function $pascalcase(x: string): string {
+            const words: string[] = to.string.words(x);
+
+            if (is.array.empty(words)) {
+                return "";
+            }
+
+            return words.map(to.string.capitalize).join("");
+        },
+
+        kebabcase: function $kebabcase(x: string): string {
+            const words: string[] = to.string.words(x);
+
+            if (is.array.empty(words)) {
+                return "";
+            }
+
+            return words.map(to.string.lowercase).join("-");
+        },
+
+        snakecase: function $snakecase(x: string): string {
+            const words: string[] = to.string.words(x);
+
+            if (is.array.empty(words)) {
+                return "";
+            }
+
+            return words.map(to.string.lowercase).join("_");
+        },
+
+        titlecase: function $titlecase(x: string): string {
+            const words: string[] = to.string.words(x);
+
+            if (is.array.empty(words)) {
+                return "";
+            }
+
+            return words.map(to.string.capitalize).join(" ");
+        },
+
+        pad: function $pad(x: string, length: number, fill: string = " "): string {
+            return x.padStart(Math.floor((length - x.length) / 2) + x.length, fill).padEnd(length, fill);
+        },
+
+        padStart: function $padStart(x: string, length: number, fill: string = " "): string {
+            return x.padStart(length, fill);
+        },
+
+        padEnd: function $padEnd(x: string, length: number, fill: string = " "): string {
+            return x.padEnd(length, fill);
+        },
+
+        trim: function $trim(x: string, ...chars: string[]): string {
+            return to.string.trimStart(to.string.trimEnd(x, ...chars), ...chars);
+        },
+
+        trimStart: function $trimStart(x: string, ...chars: string[]): string {
+            let i: number = 0;
+
+            if (chars.length === 0) {
+                return x.trimEnd();
+            } else if (chars.length === 1) {
+                while (i < x.length && x[i] === chars[0]) i++;
+            } else if (chars.length === 2) {
+                while (i < x.length && (x[i] === chars[0] || x[i] === chars[1])) i++;
+            } else if (chars.length === 3) {
+                while (i < x.length && (x[i] === chars[0] || x[i] === chars[1] || x[i] === chars[2])) i++;
+            } else {
+                while (i < x.length && chars.includes(x[i - 1])) i++;
+            }
+
+            return x.substring(i);
+        },
+
+        trimEnd: function $trimEnd(x: string, ...chars: string[]): string {
+            let i: number = x.length;
+
+            if (chars.length === 0) {
+                return x.trimEnd();
+            } else if (chars.length === 1) {
+                while (i > 0 && x[i - 1] === chars[0]) i--;
+            } else if (chars.length === 2) {
+                while (i > 0 && (x[i - 1] === chars[0] || x[i - 1] === chars[1])) i--;
+            } else if (chars.length === 3) {
+                while (i > 0 && (x[i - 1] === chars[0] || x[i - 1] === chars[1] || x[i - 1] === chars[2])) i--;
+            } else {
+                while (i > 0 && chars.includes(x[i - 1])) i--;
+            }
+
+            return x.substring(0, i);
         }
     }
 )
