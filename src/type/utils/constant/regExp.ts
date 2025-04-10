@@ -1,0 +1,4 @@
+export const aspDotNetJsonDateRegexp = /^\/?Date\((?<time>-?\d+)/i;
+export const extendedIso8601Regexp = /^\s*((?<year>[+-]\d{6}|\d{4})(?:-(?:(?<month>\d\d)(-(?<date>\d\d))?|W(?<week>\d\d)(-(?<day>\d))?|(?<dayOfYear>\d\d\d))?)?)(?:([T ])(?<hour>\d\d)(?::(?<minute>\d\d)(?::(?<second>\d\d)(?:[.,](?<millisecond>\d+))?)?)?(?<timezone>[+-]\d\d(?::?\d\d)?|\s*Z)?)?\s*$/;
+export const basicIso8601Regexp = /^\s*((?<year>[+-]\d{6}|\d{4})(?:(?<month>\d\d)(?<date>\d\d)?|W(?<week>\d\d)(?<day>\d)?|(?<dayOfYear>\d\d\d))?)(?:([T ])(?<hour>\d\d)(?:(?<minute>\d\d)(?:(?<second>\d\d)(?:[.,](?<millisecond>\d+))?)?)?(?<timezone>[+-]\d\d(?::?\d\d)?|\s*Z)?)?\s*$/;
+export const rfc2822Regexp = /^\s*(?:(?<day>Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s)?(?<date>\d{1,2})\s(?<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(?<year>\d{2,4})(?:\s(?<hour>\d\d))?(?::(?<minute>\d\d))?(?::(?<second>\d\d))?(?:\s(?<timezone>((UT|GMT|[ECMP][SD]T)|([Zz])|([+-]\d{4}))))?\s*$/;

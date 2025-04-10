@@ -1,19 +1,44 @@
 import {Constructor, ConstructorKey, Falsy, JSONValue, PathRecord, PrimitiveType, PrimitiveTypeKey, Truthy} from "../../utils/types";
-import {$string, StringPredicate} from "../internal/string";
-import {$number, NumberPredicate} from "../internal/number";
-import {$boolean, BooleanPredicate} from "../internal/boolean";
-import {$object, ObjectPredicate} from "../internal/object";
-import {$function, FunctionPredicate} from "../internal/function";
-import {$symbol, SymbolPredicate} from "../internal/symbol";
-import {$bigint, BigintPredicate} from "../internal/bigint";
-import {$array, ArrayPredicate} from "../internal/array";
-import {$set, SetPredicate} from "../internal/set";
-import {$map, MapPredicate} from "../internal/map";
-import {$node, NodePredicate} from "../internal/node";
-import {$file, FilePredicate} from "../internal/file";
-import {$date, DatePredicate} from "../internal/date";
-import {equalDeep, isArrayJsonEncodable, isObjectJsonEncodable, isValueJsonEncodable} from "../../utils/functions";
-import to from "../../to/index";
+import {$string, StringPredicate} from "./string";
+import {$number, NumberPredicate} from "./number";
+import {$boolean, BooleanPredicate} from "./boolean";
+import {$object, ObjectPredicate} from "./object";
+import {$function, FunctionPredicate} from "./function";
+import {$symbol, SymbolPredicate} from "./symbol";
+import {$bigint, BigintPredicate} from "./bigint";
+import {$array, ArrayPredicate} from "./array";
+import {$set, SetPredicate} from "./set";
+import {$map, MapPredicate} from "./map";
+import {$node, NodePredicate} from "./node";
+import {$file, FilePredicate} from "./file";
+import {$date, DatePredicate} from "./date";
+import {$promise, PromisePredicate} from "./promise";
+import {$predicate} from "../internal/is/is";
+import {$in} from "../internal/is/in";
+import {$constructor} from "../internal/is/constructor";
+import {$blob} from "../internal/is/blob";
+import {$buffer} from "../internal/is/buffer";
+import {$sharedArrayBuffer} from "../internal/is/sharedArrayBuffer";
+import {$regExp} from "../internal/is/regExp";
+import {$dataView} from "../internal/is/dataView";
+import {$error} from "../internal/is/error";
+import {$argument} from "../internal/is/arguments";
+import {$propertyKey} from "../internal/is/propertyKey";
+import {$iterator} from "../internal/is/iterator";
+import {$iterable} from "../internal/is/iterable";
+import {$null} from "../internal/is/null";
+import {$undefined} from "../internal/is/undefined";
+import {$prototype} from "../internal/is/prototype";
+import {$eq} from "../internal/is/eq";
+import {$falsy} from "../internal/is/falsy";
+import {$truthy} from "../internal/is/truthy";
+import {$nil} from "../internal/is/nil";
+import {$notNil} from "../internal/is/notNil";
+import {$primitive} from "../internal/is/primitive";
+import {$jsonValue} from "../internal/is/jsonValue";
+import {$jsonArray} from "../internal/is/jsonArray";
+import {$jsonObject} from "../internal/is/jsonObject";
+import {$index} from "../internal/is";
 
 export interface Predicate {
     <T extends PrimitiveTypeKey>(x: unknown, type: T): x is PrimitiveType<T>;
@@ -35,10 +60,11 @@ export interface Predicate {
     node: NodePredicate;
     file: FilePredicate;
     date: DatePredicate;
+    promise: PromisePredicate;
 
-    in<T, Key extends PropertyKey, U extends PrimitiveTypeKey>(x: T, key: Key, type: U): x is T & PathRecord<Key, PrimitiveType<U>>;
+    in<T, Key extends PropertyKey, U extends PrimitiveTypeKey>(x: T, key: Key, type?: U): x is T & PathRecord<Key, PrimitiveType<U>>;
 
-    in<T, Key extends PropertyKey, U extends ConstructorKey>(x: T, key: Key, type: U): x is T & PathRecord<Key, Constructor<any>>;
+    in<T, Key extends PropertyKey, U extends ConstructorKey>(x: T, key: Key, type?: U): x is T & PathRecord<Key, Constructor<any>>;
 
     in<T, Key extends PropertyKey, U>(x: T, key: Key, type?: Constructor<U>): x is T & PathRecord<Key, U>;
 
@@ -50,7 +76,7 @@ export interface Predicate {
 
     sharedArrayBuffer(x: unknown): x is SharedArrayBuffer;
 
-    regexp(x: unknown): x is RegExp;
+    regExp(x: unknown): x is RegExp;
 
     dataView(x: unknown): x is DataView;
 
@@ -82,35 +108,19 @@ export interface Predicate {
 
     jsonValue(x: unknown): x is JSONValue | JSONValue[] | Record<string, JSONValue>;
 
-    jsonArray(x: unknown): x is JSONValue[];
+    jsonArray(x: unknown): x is (JSONValue | JSONValue[] | Record<string, JSONValue>)[];
 
-    jsonObject(x: unknown): x is Record<string, JSONValue>;
+    jsonObject(x: unknown): x is Record<string, JSONValue | JSONValue[] | Record<string, JSONValue>>;
 
     index(x: unknown): boolean;
 
-    eq(lhs: any, rhs: any, comparator?: (lhs?: any, rhs?: any) => boolean | undefined): boolean;
+    eq(lhs: any, rhs: any, comparator?: (lhs?: any, rhs?: any) => boolean): boolean;
+
+    [Symbol.toStringTag]: string;
 }
 
 export const is: Predicate = Object.assign(
-    function $is<T>(x: unknown, type: any): x is T {
-        if (type === "constructor") {
-            return is.constructor(x);
-        }
-
-        if (type === "object") {
-            return typeof x === "object" && x !== null;
-        }
-
-        if (typeof type === "string") {
-            return typeof x === type;
-        }
-
-        if (typeof type === "undefined") {
-            return false;
-        }
-
-        return x instanceof type;
-    },
+    $predicate,
     {
         string: $string,
         number: $number,
@@ -125,164 +135,32 @@ export const is: Predicate = Object.assign(
         node: $node,
         file: $file,
         date: $date,
-
-        in: function $in<T, Key extends PropertyKey, U>(x: T, propertyKeys: Key, type?: any): x is T & PathRecord<Key, U> {
-            let current: any = x;
-
-            if (typeof propertyKeys === "string" && propertyKeys.includes(".")) {
-                for (const key of propertyKeys.split(".")) {
-                    if (!is.in(current, key)) {
-                        return false;
-                    }
-                    
-                    current = to.object.get(current, key);
-                }
-
-                return type === undefined || is(current, type);
-            }
-
-            if (current == null) {
-                return false;
-            }
-
-            return to.object.has(current, propertyKeys) && (type === undefined || is(to.object.get(current, propertyKeys), type));
-        },
-
-        constructor: function $constructor(x: unknown): x is Constructor<any> {
-            if (typeof x !== 'function') {
-                return false;
-            }
-
-            try {
-                Reflect.construct(String, [], x);
-                const descriptor: PropertyDescriptor | undefined = Object.getOwnPropertyDescriptor(x, "prototype");
-                return !(!descriptor || descriptor.writable);
-            } catch (e) {
-                return false;
-            }
-        },
-
-        blob: function $blob(x: unknown): x is Blob {
-            try {
-                return x instanceof Blob;
-            } catch {
-                return false;
-            }
-        },
-
-        buffer: function $buffer(x: unknown): x is Buffer {
-            try {
-                return x instanceof Buffer;
-            } catch {
-                return false;
-            }
-        },
-
-        sharedArrayBuffer: function $sharedArrayBuffer(x: unknown): x is SharedArrayBuffer {
-            try {
-                return x instanceof SharedArrayBuffer;
-            } catch {
-                return false;
-            }
-        },
-
-        regexp: function $regexp(x: unknown): x is RegExp {
-            try {
-                return x instanceof RegExp;
-            } catch {
-                return false;
-            }
-        },
-
-        dataView: function $dataView(x: unknown): x is DataView {
-            try {
-                return x instanceof DataView;
-            } catch {
-                return false;
-            }
-        },
-
-        error: function $error(x: unknown): x is Error {
-            try {
-                return x instanceof Error || x instanceof DOMException;
-            } catch {
-                return false;
-            }
-        },
-
-        argument: function $argument(x: unknown): x is IArguments {
-            return typeof x === "object" && is.in(x, "callee") && !Object.prototype.propertyIsEnumerable.call(x, "callee");
-        },
-
-        propertyKey: function $propertyKey(x: unknown): x is PropertyKey {
-            const type: string = typeof x;
-
-            return type === "string" || type === "number" || type === "symbol";
-        },
-
-        iterator: function $iterator<T>(x: unknown): x is Iterator<T> {
-            return x instanceof ""[Symbol.iterator]().constructor;
-        },
-
-        iterable: function $iterable<T, U = unknown>(x: U): x is U & Iterable<T> {
-            return is.in(x, Symbol.iterator, "function") && is.in(x[Symbol.iterator](), "next", "function");
-        },
-
-        null: function $null(x: unknown): x is null {
-            return x === null;
-        },
-
-        undefined: function $undefined(x: unknown): x is undefined {
-            return x === undefined;
-        },
-
-        prototype: function $prototype(x: unknown): x is Function {
-            const constructor = x && x.constructor;
-            const prototype = (typeof constructor === "function" && constructor.prototype) || Object.prototype;
-
-            return x === prototype;
-        },
-
-        falsy: function $falsy(x: unknown): x is Falsy {
-            return x == null || x === false || x === 0 || x === -0 || (typeof BigInt === "function" && x === BigInt(0)) || Number.isNaN(x) || x === "";
-        },
-
-        truthy: function $truthy<T = unknown>(x: T): x is Truthy<T> {
-            return x != null && x !== false && x !== 0 && x !== -0 && (typeof BigInt !== "function" || x !== BigInt(0)) && !Number.isNaN(x) && x !== "";
-        },
-
-        nil: function $nil(x: unknown): x is null | undefined {
-            return x == null;
-        },
-
-        notNil: function $notNil<T>(x: T | null | undefined): x is T {
-            return x != null;
-        },
-
-        primitive: function $primitive(x: unknown): x is null | undefined | string | number | boolean | symbol | bigint {
-            return x == null || (typeof x !== "object" && typeof x !== "function");
-        },
-
-        jsonValue: function $jsonValue(x: unknown): x is JSONValue | JSONValue[] | Record<string, JSONValue> {
-            return isValueJsonEncodable(x);
-        },
-
-        jsonArray: function $jsonValue(x: unknown): x is JSONValue[] {
-            return isArrayJsonEncodable(x);
-        },
-
-        jsonObject: function $jsonValue(x: unknown): x is Record<string, JSONValue> {
-            return isObjectJsonEncodable(x);
-        },
-
-        index: function $index(x: PropertyKey): boolean {
-            const type: string = typeof x;
-
-            return (type === "number" && is.number.index(x as number)) || (type === "string" && is.string.index(x as string));
-        },
-
-        eq: function $eq(lhs: any, rhs: any, comparator?: (lhs?: any, rhs?: any) => boolean | undefined): boolean {
-            return equalDeep(lhs, rhs, comparator);
-        }
+        promise: $promise,
+        in: $in,
+        constructor: $constructor,
+        blob: $blob,
+        buffer: $buffer,
+        sharedArrayBuffer: $sharedArrayBuffer,
+        regExp: $regExp,
+        dataView: $dataView,
+        error: $error,
+        argument: $argument,
+        propertyKey: $propertyKey,
+        iterator: $iterator,
+        iterable: $iterable,
+        null: $null,
+        undefined: $undefined,
+        prototype: $prototype,
+        falsy: $falsy,
+        truthy: $truthy,
+        nil: $nil,
+        notNil: $notNil,
+        primitive: $primitive,
+        jsonValue: $jsonValue,
+        jsonArray: $jsonArray,
+        jsonObject: $jsonObject,
+        index: $index,
+        eq: $eq,
+        [Symbol.toStringTag]: "Is"
     }
 );

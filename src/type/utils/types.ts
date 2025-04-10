@@ -1,3 +1,5 @@
+import {languages} from "./constant/languages";
+
 export type ConstructorKey = "constructor";
 
 export type Constructor<T> = { new(...args: any[]): T };
@@ -17,18 +19,13 @@ export type PathRecord<Path extends PropertyKey, Value> =
             [P in Path]: Value
         };
 
-export type JSONValue = string | number | boolean | null;
+export type JSONValue = String | Number | Boolean | string | number | boolean | null;
 
 export type Range =
     | "()"
     | "(]"
     | "[)"
     | "[]";
-
-export type ToArray<T>
-    = T extends ArrayOf<infer E>
-    ? E[]
-    : T[];
 
 export type ToFunction<T>
     = T extends (...args: any[]) => any
@@ -61,8 +58,8 @@ export type FlowFunction<Functions extends Function[]> =
             : never
         : never;
 
-export const unfixed: unique symbol = Symbol.for("Unfixed");
-export type Unfixed = typeof unfixed;
+export const unfixedSymbol: unique symbol = Symbol.for("Unfixed");
+export type Unfixed = typeof unfixedSymbol;
 
 export type RemainingParameters<F extends (...args: any[]) => any, A extends any[], P extends any[] = FlatParameters<F>, R extends any[] = []> =
     P extends [infer P0, ...infer PRest]
@@ -79,26 +76,6 @@ type FlatParameters<F extends (...args: any[]) => any, P extends any[] = Paramet
         : number extends P['length']
             ? [...R, ...P]
             : [...R];
-
-export type HTMLElementObserverHandler = {
-    attributes?: (target?: Node, oldValue?: { [K in string]: string | null } | null, newValue?: { [K in string]: string | null } | null) => void;
-    data?: (target?: Node, oldValue?: string | null, newValue?: string | null) => void;
-    children?: (target?: Node, removed?: Node[], added?: Node[]) => void;
-    deep?: boolean;
-};
-
-export type FunctionObserverHandler = {
-    apply?: (target?: (...args: any[]) => any, thisArg?: any, argArray?: any[]) => void;
-};
-
-export type ObjectObserverHandler = {
-    get?: (target?: any, p?: string | symbol, value?: any) => void;
-    set?: (target?: any, p?: string | symbol, oldValue?: any, newValue?: any) => void;
-    delete?: (target?: any, p?: string | symbol, value?: any) => void;
-    deep?: boolean;
-};
-
-export type Observable<T> = T & { revoke(): void };
 
 export type ArrayOf<E = unknown> = (E[] | readonly E[]);
 
@@ -175,6 +152,80 @@ export type DeepOmit<Value, Omitted extends Keys<Value, Ignore>, Ignore = never>
                 ? DeepOmitTuple<Value, UnionToTuple<Omitted>, Ignore>
                 : never;
 
+export type DateComponentArray =
+    | [number]
+    | [number, number]
+    | [number, number, number]
+    | [number, number, number, number]
+    | [number, number, number, number, number]
+    | [number, number, number, number, number, number]
+    | [number, number, number, number, number, number, number];
+
+export type DateLike =
+    | number
+    | string
+    | Date
+    | HTMLInputElement
+    | Record<string, any>;
+
+export const timeSymbol: unique symbol = Symbol.for("Time");
+export type UnitTime = typeof timeSymbol;
+
+export const yearSymbol: unique symbol = Symbol.for("Year");
+export type UnitYear = typeof yearSymbol;
+
+export const monthSymbol: unique symbol = Symbol.for("Month");
+export type UnitMonth = typeof monthSymbol;
+
+export const isoWeekSymbol: unique symbol = Symbol.for("ISOWeek");
+export type UnitISOWeek = typeof isoWeekSymbol;
+
+export const weekSymbol: unique symbol = Symbol.for("Week");
+export type UnitWeek = typeof weekSymbol;
+
+export const dateSymbol: unique symbol = Symbol.for("Date");
+export type UnitDate = typeof dateSymbol;
+
+export const hourSymbol: unique symbol = Symbol.for("Hour");
+export type UnitHour = typeof hourSymbol;
+
+export const minuteSymbol: unique symbol = Symbol.for("Minute");
+export type UnitMinute = typeof minuteSymbol;
+
+export const secondSymbol: unique symbol = Symbol.for("Second");
+export type UnitSecond = typeof secondSymbol;
+
+export const millisecondSymbol: unique symbol = Symbol.for("Millisecond");
+export type UnitMillisecond = typeof millisecondSymbol;
+
+export type DateComponents = {
+    century: number,
+    year: number,
+    quarter: number,
+    month: number,
+    date: number,
+    day: number,
+    isoDay: number,
+    week: number,
+    isoWeek: number,
+    dayOfYear: number,
+    hour: number,
+    minute: number,
+    second: number,
+    millisecond: number,
+    time: number,
+    offset: number,
+    format: { [K in DateFormatKey]: string }
+};
+
+export interface DateExtension {
+    source?: any,
+    format?: string,
+    valid: boolean
+}
+
+export type DateExtended = Date & DateExtension
+
 export type PrimitiveTypeKey =
     | "string"
     | "number"
@@ -205,13 +256,16 @@ export type PrimitiveType<Key extends PrimitiveTypeKey> =
                                     : never;
 
 export type DateUnit =
-    | "year"
-    | "month"
-    | "date"
-    | "hour"
-    | "minute"
-    | "second"
-    | "millisecond";
+    | UnitTime
+    | UnitYear
+    | UnitMonth
+    | UnitWeek
+    | UnitISOWeek
+    | UnitDate
+    | UnitHour
+    | UnitMinute
+    | UnitSecond
+    | UnitMillisecond;
 
 export type Extensions =
     | "pdf"
@@ -232,227 +286,95 @@ export type Extensions =
     | "wmv"
     | "mov";
 
-export type Language =
-    | "Adlm"
-    | "Afak"
-    | "Aghb"
-    | "Ahom"
-    | "Arab"
-    | "Aran"
-    | "Armi"
-    | "Armn"
-    | "Avst"
-    | "Bali"
-    | "Bamu"
-    | "Bass"
-    | "Batk"
-    | "Beng"
-    | "Bhks"
-    | "Blis"
-    | "Bopo"
-    | "Brah"
-    | "Brai"
-    | "Bugi"
-    | "Buhd"
-    | "Cakm"
-    | "Cans"
-    | "Cari"
-    | "Cham"
-    | "Cher"
-    | "Chis"
-    | "Chrs"
-    | "Cirt"
-    | "Copt"
-    | "Cpmn"
-    | "Cprt"
-    | "Cyrl"
-    | "Cyrs"
-    | "Deva"
-    | "Diak"
-    | "Dogr"
-    | "Dsrt"
-    | "Dupl"
-    | "Egyd"
-    | "Egyh"
-    | "Egyp"
-    | "Elba"
-    | "Elym"
-    | "Ethi"
-    | "Gara"
-    | "Geok"
-    | "Geor"
-    | "Glag"
-    | "Gong"
-    | "Gonm"
-    | "Goth"
-    | "Gran"
-    | "Grek"
-    | "Gujr"
-    | "Gukh"
-    | "Guru"
-    | "Hanb"
-    | "Hang"
-    | "Hani"
-    | "Hano"
-    | "Hans"
-    | "Hant"
-    | "Hatr"
-    | "Hebr"
-    | "Hira"
-    | "Hluw"
-    | "Hmng"
-    | "Hmnp"
-    | "Hrkt"
-    | "Hung"
-    | "Inds"
-    | "Ital"
-    | "Jamo"
-    | "Java"
-    | "Jpan"
-    | "Jurc"
-    | "Kali"
-    | "Kana"
-    | "Kawi"
-    | "Khar"
-    | "Khmr"
-    | "Khoj"
-    | "Kitl"
-    | "Kits"
-    | "Knda"
-    | "Kore"
-    | "Kpel"
-    | "Krai"
-    | "Kthi"
-    | "Lana"
-    | "Laoo"
-    | "Latf"
-    | "Latg"
-    | "Latn"
-    | "Leke"
-    | "Lepc"
-    | "Limb"
-    | "Lina"
-    | "Linb"
-    | "Lisu"
-    | "Loma"
-    | "Lyci"
-    | "Lydi"
-    | "Mahj"
-    | "Maka"
-    | "Mand"
-    | "Mani"
-    | "Marc"
-    | "Maya"
-    | "Medf"
-    | "Mend"
-    | "Merc"
-    | "Mero"
-    | "Mlym"
-    | "Modi"
-    | "Mong"
-    | "Moon"
-    | "Mroo"
-    | "Mtei"
-    | "Mult"
-    | "Mymr"
-    | "Nagm"
-    | "Nand"
-    | "Narb"
-    | "Nbat"
-    | "Newa"
-    | "Nkdb"
-    | "Nkgb"
-    | "Nkoo"
-    | "Nshu"
-    | "Ogam"
-    | "Olck"
-    | "Onao"
-    | "Orkh"
-    | "Orya"
-    | "Osge"
-    | "Osma"
-    | "Ougr"
-    | "Palm"
-    | "Pauc"
-    | "Pcun"
-    | "Pelm"
-    | "Perm"
-    | "Phag"
-    | "Phli"
-    | "Phlp"
-    | "Phlv"
-    | "Phnx"
-    | "Piqd"
-    | "Plrd"
-    | "Prti"
-    | "Psin"
-    | "Qaaa-Qabx"
-    | "Ranj"
-    | "Rjng"
-    | "Rohg"
-    | "Roro"
-    | "Runr"
-    | "Samr"
-    | "Sara"
-    | "Sarb"
-    | "Saur"
-    | "Sgnw"
-    | "Shaw"
-    | "Shrd"
-    | "Shui"
-    | "Sidd"
-    | "Sidt"
-    | "Sind"
-    | "Sinh"
-    | "Sogd"
-    | "Sogo"
-    | "Sora"
-    | "Soyo"
-    | "Sund"
-    | "Sunu"
-    | "Sylo"
-    | "Syrc"
-    | "Syre"
-    | "Syrj"
-    | "Syrn"
-    | "Tagb"
-    | "Takr"
-    | "Tale"
-    | "Talu"
-    | "Taml"
-    | "Tang"
-    | "Tavt"
-    | "Tayo"
-    | "Telu"
-    | "Teng"
-    | "Tfng"
-    | "Tglg"
-    | "Thaa"
-    | "Thai"
-    | "Tibt"
-    | "Tirh"
-    | "Tnsa"
-    | "Todr"
-    | "Tols"
-    | "Toto"
-    | "Tutg"
-    | "Ugar"
-    | "Vaii"
-    | "Visp"
-    | "Vith"
-    | "Wara"
-    | "Wcho"
-    | "Wole"
-    | "Xpeo"
-    | "Xsux"
-    | "Yezi"
-    | "Yiii"
-    | "Zanb"
-    | "Zinh"
-    | "Zmth"
-    | "Zsym"
-    | "Zsye"
-    | "Zxxx"
-    | "Zyyy"
-    | "Zzzz"
-    | string;
+export type DateFormatKey =
+    | "yyyyo"
+    | "yyyy"
+    | "yyo"
+    | "yy"
+    | "Qo"
+    | "Q"
+    | "MMMM"
+    | "MMM"
+    | "MM"
+    | "Mo"
+    | "M"
+    | "DD"
+    | "Do"
+    | "D"
+    | "dd"
+    | "do"
+    | "d"
+    | "HH"
+    | "Ho"
+    | "H"
+    | "hh"
+    | "ho"
+    | "h"
+    | "mm"
+    | "mo"
+    | "m"
+    | "SSS"
+    | "ss"
+    | "so"
+    | "s"
+    | "A"
+    | "a"
+    | "ZZ"
+    | "Z"
+    | "EEEE"
+    | "EEE"
+    | "X"
+    | "x"
+    | "WW"
+    | "Wo"
+    | "W"
+    | "ww"
+    | "wo"
+    | "w"
+    | "Eo"
+    | "E"
+    | "eo"
+    | "e"
+    | "N"
+    | "n";
+
+export type Base =
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9
+    | 10
+    | 11
+    | 12
+    | 13
+    | 14
+    | 15
+    | 16
+    | 17
+    | 18
+    | 19
+    | 20
+    | 21
+    | 22
+    | 23
+    | 24
+    | 25
+    | 26
+    | 27
+    | 28
+    | 29
+    | 30
+    | 31
+    | 32
+    | 33
+    | 34
+    | 35
+    | 36;
+
+export type CSSStyle = Partial<Record<keyof Omit<CSSStyleDeclaration, "length" | "parentRule" | number | typeof Symbol.iterator> | string, string>>;
+
+export type Language = typeof languages[keyof typeof languages];
